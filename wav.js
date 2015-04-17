@@ -41,13 +41,7 @@ function wav(file) {
   
   // format
   this.chunkID       = undefined; // must be RIFF
-  this.chunkSize     = undefined; // size of file after this field
   this.format        = undefined; // must be WAVE
-  this.compression   = undefined; // 1=PCM
-  this.numChannels   = undefined; // Mono = 1, Stereo = 2
-  this.sampleRate    = undefined; // 8000, 44100, etc.
-  this.byteRate      = undefined; // bytes per second
-  this.blockAlign    = undefined; // number of bytes for one sample including all channels.
   this.bitsPerSample = undefined; // 8 bits = 8, 16 bits = 16, etc.
   
   // data chunk
@@ -83,20 +77,9 @@ wav.prototype.peek = function () {
   };
 };
 
-/*wav.prototype.loadDataInBuffer = function() {
-  var reader = new FileReader();
-  reader.readAsArrayBuffer(file);
-
-  var that = this;
-  reader.onloadend = function() {
-    that.buffer = this.result;
-    that.parseArrayBuffer.apply(that);
-  };
-}*/
-
 wav.prototype.parseArrayBuffer = function () {
   try {
-    //this.parseHeader();
+    this.parseHeader();
     this.parseData();
     this.readyState = this.DONE;
   }
@@ -116,27 +99,16 @@ wav.prototype.parseArrayBuffer = function () {
  * Based on https://ccrma.stanford.edu/courses/422/projects/WaveFormat/
  * and http://www.sonicspot.com/guide/wavefiles.html
  */
-/*wav.prototype.parseHeader = function () {
+wav.prototype.parseHeader = function () {
    
   this.chunkID       = this.readText(0, 4);
-  this.chunkSize     = this.readDecimal(4, 4);
   if (this.chunkID !== 'RIFF') throw 'NOT_SUPPORTED_FORMAT';
     
   this.format        = this.readText(8, 4);
   if (this.format !== 'WAVE') throw 'NOT_SUPPORTED_FORMAT';
-  
-  this.compression   = this.readDecimal(20, 2); 
-  this.numChannels   = this.readDecimal(22, 2); 
-  this.sampleRate    = this.readDecimal(24, 4); 
-
-  // == SampleRate * NumChannels * BitsPerSample/8
-  this.byteRate      = this.readDecimal(28, 4); 
-  
-  // == NumChannels * BitsPerSample/8
-  this.blockAlign    = this.readDecimal(32, 2); 
 
   this.bitsPerSample = this.readDecimal(34, 2);
-};*/
+};
 
 /**
  * Walk through all subchunks and look for the Data chunk
@@ -157,45 +129,7 @@ wav.prototype.parseData = function () {
   }
 };
 
-
-
-/**
- * Returns slice of file as new wav file
- * @param {int} start  Start offset in seconds from beginning of file
- * @param {int} end    Length of requested slice in seconds
- */
-wav.prototype.slice = function (start, length, callback) {
-  
-  var reader = new FileReader();
-  var that = this;
-  
-  // use the byterate to calculate number of bytes per second
-  var start = this.dataOffset + (start * this.byteRate);
-  var end = start + (length * this.byteRate);
-  
-  var headerBlob = this.sliceFile(0, 44);
-  var dataBlob = this.sliceFile(start, end);
-
-  // concant header and data slice
-  var blob = new Blob([headerBlob, dataBlob]);
-
-  reader.readAsArrayBuffer(blob);
-  reader.onloadend = function() {  
-    
-    // update chunkSize in header
-    var chunkSize = new Uint8Array(this.result, 4, 4);
-    that.tolittleEndianDecBytes(chunkSize, 36+dataBlob.size);
-
-    // update dataChunkSize in header
-    var dataChunkSize = new Uint8Array(this.result, 40, 4);
-    that.tolittleEndianDecBytes(dataChunkSize, dataBlob.size);
-
-    if (callback) callback.apply(that, [this.result]);
-  };
-};
-
-
- /** do we need direct access to  samples?
+ /** direct access to  samples
  **/
 wav.prototype.getSamples = function () {
 
@@ -207,9 +141,9 @@ wav.prototype.getSamples = function () {
   reader.onloadend = function() {
     that.buffer = this.result;
     if (that.bitsPerSample === 8)
-    that.dataSamples = new Uint8Array(that.buffer, 44);
+    that.dataSamples = new Uint8Array(that.buffer, that.dataOffset);
   else if (that.bitsPerSample === 16)
-    that.dataSamples = new Int16Array(that.buffer, 44);
+    that.dataSamples = new Int16Array(that.buffer, that.dataOffset);
   };
   
 }
@@ -263,35 +197,5 @@ wav.prototype.tolittleEndianDecBytes = function (a, decimalVal) {
 wav.prototype.sliceFile = function (start, end) {
   if (this.file.slice) return this.file.slice(start, end); 
   if (this.file.webkitSlice) return this.file.webkitSlice(start, end);
-};
-
-
-wav.prototype.isCompressed = function () {
-  return this.compression !== 1;  
-};
-  
-wav.prototype.isMono = function () {
-  return this.numChannels === 1;  
-};
-  
-wav.prototype.isStereo = function () {
-  return this.numChannels === 2;
-};
-
-wav.prototype.getDuration = function () {
-  return this.dataLength > -1 ? (this.dataLength / this.byteRate) : -1;
-};
-
-
-/**
- * Override toString
- */
-wav.prototype.toString = function () {
-  return (this.file ? this.file.name : 'noname.wav') + ' (' + this.chunkID + '/' + this.format + ')\n' +
-    'Compression: ' + (this.isCompressed() ? 'yes' : 'no (PCM)') + '\n' +
-    'Number of channels: ' + this.numChannels + ' (' + (this.isStereo()?'stereo':'mono') + ')\n' +
-    'Sample rate: ' + this.sampleRate + ' Hz\n'+
-    'Sample size: ' + this.bitsPerSample + '-bit\n'+
-    'Duration: ' + Math.round(this.getDuration()) + ' seconds';
 };
 
