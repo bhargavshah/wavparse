@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Page Title</title>
+<script src="wav.js"></script>
+</head>
+<body>
+<h1>Parse WAVE file</h1>
+<input type="file" id="input" onchange="handleFiles(this.files)">
+<button type="button" onclick="handleClick()">Parse WAV</button>
+<script>
+
+ var _arrBuf;
+ var _file;
+
+function handleFiles(files) {
+ _file = files[0];
+
+ var fr  = new FileReader();
+ fr.readAsArrayBuffer(_file);
+ var that = this;
+ fr.addEventListener("loadend", function(e) {
+ 	_arrBuf = e.target.result;
+ 	alert("loaded");
+ });
+}
+
+function handleClick() {
+ 	// var oMyBlob = new Blob(_arrBuf, {type : 'audio/wav'}); // the blob
+ 	var wavFile = new wav(_file);
+	wavFile.onloadend = function () {
+    // 'this' refers to the wav instance
+    console.log(this);
+    var samples = this.getSamples();
+	}; 
+}
+</script>
+</body>
+</html>
