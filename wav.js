@@ -15,6 +15,9 @@ NOTE: Does not auto-correct:
 @author  David Lindkvist
 @twitter ffdead
 
+Note : This util was originally created by the above author. For my needs, I needed to get the samples and hence I've modified it.
+The original repo is here https://github.com/ffdead/wav.js
+
 */
 
 
@@ -67,9 +70,7 @@ wav.prototype.peek = function () {
   var reader = new FileReader();
   var that = this;
   
-  // only load the first 44 bytes of the header
-  var headerBlob = this.sliceFile(0, 44);
-  reader.readAsArrayBuffer(headerBlob);
+  reader.readAsArrayBuffer(this.file);
   
   reader.onloadend = function() {  
     that.buffer = this.result;
@@ -81,6 +82,7 @@ wav.prototype.parseArrayBuffer = function () {
   try {
     this.parseHeader();
     this.parseData();
+    this.parseSamples();
     this.readyState = this.DONE;
   }
   catch (e) {
@@ -131,21 +133,13 @@ wav.prototype.parseData = function () {
 
  /** direct access to  samples
  **/
-wav.prototype.getSamples = function () {
+wav.prototype.parseSamples = function () {
 
-  // TODO load data chunk into buffer
-  var reader = new FileReader();
-  reader.readAsArrayBuffer(this.file);
+  if (this.bitsPerSample === 8)
+    this.dataSamples = new Uint8Array(this.buffer, this.dataOffset);
+  else if (this.bitsPerSample === 16)
+    this.dataSamples = new Int16Array(this.buffer, this.dataOffset);
 
-  var that = this;
-  reader.onloadend = function() {
-    that.buffer = this.result;
-    if (that.bitsPerSample === 8)
-    that.dataSamples = new Uint8Array(that.buffer, that.dataOffset);
-  else if (that.bitsPerSample === 16)
-    that.dataSamples = new Int16Array(that.buffer, that.dataOffset);
-  };
-  
 }
 
 
