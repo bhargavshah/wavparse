@@ -2,7 +2,7 @@
 Parse wav audio files in javascript.
 
 # Usage
-Get a file instance of a wav file and pass it to the wav constructor
+Get a File instance of a wav file and pass it to the wav constructor
 Example shown in index.html
 
 # Note
