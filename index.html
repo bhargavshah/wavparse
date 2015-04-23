@@ -3,6 +3,9 @@
 <head>
 <title>Parse WAVE File</title>
 <script src="wav.js"></script>
+<script type="text/javascript" charset="utf-8" src="encoder.js"></script>
+<script type="text/javascript" src="speex.min.js"></script>
+<script type="text/javascript" src="jquery-1.7.2.min.js"></script>
 </head>
 <body>
 <h1>Parse WAVE file</h1>
@@ -12,18 +15,36 @@
 <script>
 
 var _file;
+var _wavFile;
 
 function handleFiles(files) {
 	_file = files[0];
 }
 
 function handleClick() {
-	var wavFile = new wav(_file);
-	wavFile.onloadend = function () {
+	_wavFile = new wav(_file);
+	_wavFile.onloadend = function () {
 	// 'this' refers to the wav instance
 	console.log(this);
+	letsEncode();
 	}; 
 }
+
+function letsEncode() {
+	$(document).on('tn.recorder.encoded', function(e) { 
+		alert('tn.recorder.encoded');
+	});
+    try {
+        // alert('canYouEncode');
+        var encoder = new Encoder();
+        encoder.encodeSPXB64( _wavFile.dataSamples, 8);
+    }
+    catch (e) {
+        alert('error encoding' + JSON.stringify(e));
+    }
+}
+
+
 </script>
 </body>
 </html>
