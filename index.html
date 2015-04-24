@@ -31,8 +31,8 @@ function handleClick() {
 }
 
 function letsEncode() {
-	$(document).on('tn.recorder.encoded', function(e) { 
-		alert('tn.recorder.encoded');
+	$(document).on('tn.recorder.encoded', function(e, data) { 
+		alert('tn.recorder.encoded = ' + JSON.stringify(data));
 	});
     try {
         // alert('canYouEncode');

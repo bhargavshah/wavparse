@@ -1,7 +1,6 @@
         function Encoder( args ) {
 
             function encodeSPXB64( samples, spxQuality ) {     
-                alert('reached encoding function');
                 var workerBlob = URL.createObjectURL( new Blob([ '(', 
                     function() {
                         self.addEventListener('message', function(e) {
@@ -19,7 +18,6 @@
                             for( var i = 0; i < bytes.length; i++ ) {
                                 binary += String.fromCharCode( bytes[ i ] );
                             }
-
                             self.postMessage(binary);
                         });
                     }.toString(), ')()' ], { type: 'application/javascript' })
@@ -44,7 +42,6 @@
                 }
 
                 worker.postMessage( { 'samples': samples, 'spxQuality': spxQuality, 'baseURL': window.location.origin } );
-                alert('spxQuality' + spxQuality);
                 URL.revokeObjectURL( workerBlob );
             };
 
